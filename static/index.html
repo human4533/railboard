@@ -39,6 +39,9 @@ button,input,select{font:inherit;color:inherit}
 
 /* ── 본문 ── */
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
+.grid>*{min-width:0}
+.card{min-width:0;max-width:100%}
+html,body{overflow-x:hidden}
 .top{display:flex;align-items:center;gap:14px;padding:18px 24px 6px}
 .top h1{margin:0;font-size:20px;font-weight:800;display:flex;align-items:center;gap:10px}
 .top h1::before{content:"";width:4px;height:22px;border-radius:2px;background:var(--blue);box-shadow:0 0 10px var(--blue)}
@@ -46,7 +49,7 @@ button,input,select{font:inherit;color:inherit}
 .top .meta{font-size:12px;color:var(--muted);display:flex;gap:14px;align-items:center}
 .iconbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line2);background:var(--panel);display:grid;place-items:center;cursor:pointer}
 .iconbtn svg{width:18px;height:18px}
-.grid{display:grid;grid-template-columns:minmax(380px,1fr) minmax(420px,1.15fr);gap:18px;padding:12px 24px 28px;align-items:start}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;padding:12px 24px 28px;align-items:start}
 .card{background:linear-gradient(180deg,var(--panel),#0b1530);border:1px solid var(--line);border-radius:18px;padding:16px}
 .card.glow{border-color:var(--line2);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 10px 30px rgba(0,0,0,.25)}
 .card+.card{margin-top:14px}
@@ -61,8 +64,8 @@ button,input,select{font:inherit;color:inherit}
 .seg button.on{background:var(--blue);color:#fff;box-shadow:var(--glow)}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chipbar{display:flex;align-items:center;gap:6px;margin-bottom:10px}
-.chipbar .chips{flex:1;margin:0;padding-bottom:0;scroll-behavior:smooth;cursor:grab;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);padding:2px 10px}
+.chipbar{display:flex;align-items:center;gap:6px;margin-bottom:10px;min-width:0;max-width:100%}
+.chipbar .chips{flex:1;min-width:0;margin:0;padding-bottom:0;scroll-behavior:smooth;cursor:grab;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);padding:2px 10px}
 .chipbar .chips.drag{cursor:grabbing;scroll-behavior:auto}
 .cbtn{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line2);background:var(--panel2);color:var(--text);font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center}
 .cbtn:disabled{opacity:.3;cursor:default}
@@ -173,7 +176,7 @@ select,input{background:var(--bg2);border:1px solid var(--line2);border-radius:1
 @media (max-width:980px){
   .side{display:none}
   .top{padding:14px 14px 4px}.top h1{font-size:17px}.top .meta .upd{display:none}
-  .grid{grid-template-columns:1fr;padding:8px 12px 90px;gap:12px}
+  .grid{grid-template-columns:minmax(0,1fr);padding:8px 12px 90px;gap:12px}
   .card{padding:14px;border-radius:16px}
   #detail{position:fixed;inset:0;z-index:30;overflow:auto;background:var(--bg);padding:12px 12px 90px;display:none}
   #detail.open{display:block}
@@ -449,7 +452,7 @@ async function loadMap(){
   const sig = lines.map(l => l.key).join(",");
   if (box.dataset.sig !== sig){                 // 지역이 바뀔 때만 다시 그림 (스크롤 위치 유지)
     const dup = {}; lines.forEach(l => dup[l.name] = (dup[l.name] || 0) + 1);
-    box.innerHTML = lines.map(l => `<button class="chip" data-k="${esc(l.key)}">${esc(l.name)}${dup[l.name] > 1 ? ` <small style="opacity:.7">${esc(l.operator)}</small>` : ""}</button>`).join("");
+    box.innerHTML = lines.map(l => `<button class="chip" data-k="${esc(l.key)}" title="${esc(l.name)}">${esc(String(l.name).replace(/\s*\(.*?\)/g, "").replace(" 방면", ""))}${dup[l.name] > 1 ? ` <small style="opacity:.7">${esc(l.operator)}</small>` : ""}</button>`).join("");
     box.dataset.sig = sig; box.scrollLeft = 0;
     $$("#mapChips .chip").forEach(c => c.onclick = () => { if (box.dataset.moved === "1") return; box.dataset.sel = c.dataset.k; loadMap(); });
     setTimeout(() => { const on = box.querySelector(".chip.on"); if (on) on.scrollIntoView({inline:"center", block:"nearest"}); updateChipBtns(); }, 0);
