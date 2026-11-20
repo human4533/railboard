@@ -1,0 +1,14 @@
+{
+  "data_go_kr_key": "여기에_공공데이터포털_인증키(Decoding)",
+  "kric_key": "여기에_철도산업정보센터_인증키",
+  "seoul_key": "여기에_서울열린데이터광장_인증키",
+  "port": 8000,
+  "holidays": [],
+  "grade_labels": {
+    "KTX": "KTX-1"
+  },
+  "train_vehicles": {
+    "_예시_열차번호": "와인산천"
+  },
+  "password": "친구들과_쓸_비밀번호"
+}

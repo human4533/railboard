@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>레일보드</title>
+<style>
+:root{
+  --bg:#060b1a; --bg2:#0a1328; --panel:#0d1832; --panel2:#111f40; --line:#1d2c55; --line2:#27407a;
+  --text:#e9efff; --muted:#8796bd; --dim:#5b6a93;
+  --blue:#2f7bff; --blue2:#5aa0ff; --glow:0 0 0 1px rgba(90,160,255,.35),0 0 18px rgba(47,123,255,.35);
+  --amber:#ffc44d; --red:#ff5b6b; --green:#3ee08f;
+  --ktx:#2f6fed; --sancheon:#159aa8; --wine:#9c1d47; --eum:#2f9a4a; --cheongryong:#2446b8; --srt:#7a3dd8;
+  --itx:#1f9d6b; --mugunghwa:#d9473b; --express:#ff6a3d; --local:#3a4c7a; --etc:#4c5d86;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:radial-gradient(1200px 600px at 70% -10%,#12245a 0%,transparent 60%),var(--bg);color:var(--text);
+  font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Noto Sans CJK KR","Malgun Gothic",sans-serif;
+  -webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.app{display:flex;min-height:100vh}
+
+/* ── 사이드바 (PC) ── */
+.side{width:220px;flex:none;background:linear-gradient(180deg,#0b1636,#08112a);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;padding:22px 14px;position:sticky;top:0;height:100vh}
+.brand{display:flex;flex-direction:column;align-items:center;gap:6px;margin:4px 0 26px}
+.brand .name{font-size:22px;font-weight:900;letter-spacing:-.5px;background:linear-gradient(90deg,#fff,#8fc1ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand .sub{font-size:11px;color:var(--muted)}
+.nav{display:flex;flex-direction:column;gap:6px}
+.nav button{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid transparent;
+  background:none;color:var(--muted);font-size:15px;font-weight:600;cursor:pointer;text-align:left}
+.nav button svg{width:20px;height:20px;flex:none}
+.nav button.on{background:linear-gradient(90deg,#1f5fe0,#2f7bff);color:#fff;box-shadow:var(--glow)}
+.nav button:not(.on):hover{background:var(--panel)}
+.side .foot{margin-top:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12px;color:var(--muted)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);margin-right:6px;vertical-align:1px}
+.dot.off{background:var(--dim);box-shadow:none}
+
+/* ── 본문 ── */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:14px;padding:18px 24px 6px}
+.top h1{margin:0;font-size:20px;font-weight:800;display:flex;align-items:center;gap:10px}
+.top h1::before{content:"";width:4px;height:22px;border-radius:2px;background:var(--blue);box-shadow:0 0 10px var(--blue)}
+.top .sp{flex:1}
+.top .meta{font-size:12px;color:var(--muted);display:flex;gap:14px;align-items:center}
+.iconbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line2);background:var(--panel);display:grid;place-items:center;cursor:pointer}
+.iconbtn svg{width:18px;height:18px}
+.grid{display:grid;grid-template-columns:minmax(380px,1fr) minmax(420px,1.15fr);gap:18px;padding:12px 24px 28px;align-items:start}
+.card{background:linear-gradient(180deg,var(--panel),#0b1530);border:1px solid var(--line);border-radius:18px;padding:16px}
+.card.glow{border-color:var(--line2);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 10px 30px rgba(0,0,0,.25)}
+.card+.card{margin-top:14px}
+.ch{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:15px;font-weight:800}
+.ch .r{margin-left:auto;font-size:12px;font-weight:600;color:var(--muted)}
+.ch svg{width:18px;height:18px;color:var(--blue2)}
+.hidden{display:none!important}
+
+/* 탭·칩·폼 */
+.seg{display:flex;gap:6px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:12px}
+.seg button{flex:1;padding:9px 6px;border:0;border-radius:9px;background:none;color:var(--muted);font-weight:700;font-size:14px;cursor:pointer}
+.seg button.on{background:var(--blue);color:#fff;box-shadow:var(--glow)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chipbar{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.chipbar .chips{flex:1;margin:0;padding-bottom:0;scroll-behavior:smooth;cursor:grab;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);padding:2px 10px}
+.chipbar .chips.drag{cursor:grabbing;scroll-behavior:auto}
+.cbtn{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line2);background:var(--panel2);color:var(--text);font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.cbtn:disabled{opacity:.3;cursor:default}
+.dirs b{color:var(--text)}
+.chip{flex:none;padding:7px 13px;border-radius:20px;border:1px solid var(--line2);background:var(--bg2);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.chip.on{background:#16a34a;border-color:#22c55e;color:#fff;box-shadow:0 0 12px rgba(34,197,94,.45)}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted)}
+.form .wide{grid-column:1/-1}
+select,input{background:var(--bg2);border:1px solid var(--line2);border-radius:10px;padding:9px 10px;font-size:14px;width:100%;color-scheme:dark}
+.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;background:linear-gradient(90deg,#2a6cf0,#3d8bff);color:#fff;box-shadow:var(--glow)}
+.btn.ghost{background:var(--panel2);box-shadow:none;border:1px solid var(--line2);color:var(--text)}
+.form .btn{grid-column:1/-1}
+.small{font-size:12px;color:var(--muted)}
+.err{background:#3a1022;border:1px solid #6b1d3a;color:#ffb4c0;padding:10px 12px;border-radius:10px;font-size:13px;margin:8px 0}
+.warn{color:var(--amber);font-size:12px;margin:4px 0}
+
+/* 시간표 목록 */
+.list{margin-top:6px}
+.row{display:grid;grid-template-columns:64px 104px 1fr auto;gap:10px;align-items:center;padding:11px 8px;border-top:1px solid #15224a;cursor:pointer;border-radius:10px}
+.row:first-child{border-top:0}
+.row:hover,.row.sel{background:#12214a}
+.row.sel{box-shadow:inset 3px 0 0 var(--blue)}
+.t{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.t small{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.badge{display:inline-block;padding:3px 8px;border-radius:7px;font-size:12px;font-weight:800;color:#fff;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.b-ktx{background:var(--ktx)}.b-sancheon{background:var(--sancheon)}.b-wine{background:var(--wine)}.b-eum{background:var(--eum)}
+.b-cheongryong{background:var(--cheongryong)}.b-srt{background:var(--srt)}.b-itx{background:var(--itx)}.b-mugunghwa{background:var(--mugunghwa)}
+.b-express{background:var(--express)}.b-local{background:var(--local)}.b-etc{background:var(--etc)}
+.no{font-size:12px;color:var(--muted);margin-top:3px}
+.fm{color:var(--amber);font-size:11px;font-weight:700}
+.dest{font-size:15px;font-weight:700;min-width:0}
+.dest small{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-top:2px}
+.st{font-size:12px;color:var(--muted);text-align:right}
+.st .live{color:var(--green);font-weight:800}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+
+/* 노선도 */
+.mapbox{position:relative;background:#081028;border:1px solid var(--line);border-radius:14px;padding:16px 0}
+.dirs{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:0 4px 8px}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr);align-items:center;min-height:54px;position:relative}
+.mrow .rail{position:absolute;left:50%;top:0;bottom:0;width:6px;margin-left:-3px;background:#22c55e;box-shadow:0 0 10px rgba(34,197,94,.6)}
+.mrow:first-child .rail{top:50%}.mrow:last-child .rail{bottom:50%}
+.mrow .stn{grid-column:2;justify-self:center;width:16px;height:16px;border-radius:50%;background:#081028;border:3px solid #22c55e;z-index:2}
+.mrow .sname{position:absolute;left:50%;top:calc(50% + 10px);transform:translateX(-50%);font-size:11px;color:#c7d3f5;background:#081028;padding:0 5px;border-radius:4px;white-space:nowrap;z-index:3}
+.ma,.mb{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.ma{grid-column:1;justify-content:flex-end;padding-right:10px}.mb{grid-column:3;padding-left:10px}
+.tr{display:flex;flex-wrap:wrap;max-width:100%;row-gap:1px;align-items:center;gap:5px;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;white-space:nowrap}
+.tr i{width:8px;height:8px;border-radius:2px;background:#22c55e}.tr.exp i{background:var(--express)}
+.tr.exp{border-color:var(--express);box-shadow:inset 3px 0 0 var(--express)}
+.tr .xb{background:var(--express);color:#fff;font-weight:800;font-size:10.5px;padding:1px 6px;border-radius:5px}
+.tr .late{color:var(--red);font-weight:800}.tr .fm{font-size:11px}
+.tr .ss{font-size:10px;color:var(--muted);white-space:nowrap}
+.tr.park .ss{flex-basis:100%}
+.tr .ontime{color:var(--green);font-size:11px;font-weight:700}
+.tr.park{background:#141a2b;border-color:#2a3350;color:#7f8aa8}.tr.park i{background:#5b6584}.tr.park .ss{color:#7f8aa8}
+.tr.stale{opacity:.55;border-style:dashed}
+.tr.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber),0 0 14px rgba(255,196,77,.35)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:5px}.sq{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* 상세 */
+.hero{position:relative;overflow:hidden;border-radius:18px;padding:20px 20px 18px;min-height:170px;border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(120deg,#0f2a6b,#2f6fed)}
+.hero.g-wine{background:linear-gradient(120deg,#3a0b1e,#9c1d47 55%,#d1416e)}
+.hero.g-sancheon{background:linear-gradient(120deg,#062f36,#159aa8)}
+.hero.g-eum{background:linear-gradient(120deg,#0b2d16,#2f9a4a)}
+.hero.g-cheongryong{background:linear-gradient(120deg,#0a1b52,#2446b8)}
+.hero.g-itx{background:linear-gradient(120deg,#08311f,#1f9d6b)}
+.hero.g-mugunghwa{background:linear-gradient(120deg,#3d0c0c,#d9473b)}
+.hero.g-express,.hero.g-local{background:linear-gradient(120deg,#0d2a1a,#16a34a)}
+.hero .train{position:absolute;right:-30px;bottom:-6px;width:62%;max-width:360px;opacity:.95;pointer-events:none}
+.hero .k{font-size:13px;opacity:.85;position:relative}
+.hero .title{font-size:34px;font-weight:900;letter-spacing:-1px;margin:4px 0 6px;position:relative;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.hero .route{font-size:15px;position:relative}
+.hero .bd{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;position:relative}
+.pill{padding:4px 10px;border-radius:8px;font-size:12px;font-weight:800;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.18)}
+.pill.red{background:var(--red);border-color:var(--red)}
+.fin{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+.fin input:first-child{grid-column:1/-1}
+.ent{display:flex;gap:12px;align-items:center;padding:11px 4px;border-top:1px solid #15224a}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:900;flex:none;font-size:14px}
+.ent .v{font-weight:800}.ent .w{font-size:12px;color:var(--muted);margin-top:2px}
+.like{margin-left:auto;border:1px solid var(--line2);background:var(--bg2);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.like.on{border-color:var(--amber);color:var(--amber)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.two .card{margin:0}
+.stops .sr{display:grid;grid-template-columns:18px 1fr 54px 54px 44px;gap:6px;align-items:center;padding:7px 2px;font-size:14px}
+.stops .sr.h{font-size:11px;color:var(--muted)}
+.stops .pin{width:11px;height:11px;border-radius:50%;border:2px solid var(--blue2);background:#081028}
+.stops .done{color:var(--muted)}.stops .done .pin{background:var(--blue2)}
+.stops .now{background:#1a2a5a;border-radius:8px}.stops .now .pin{background:var(--amber);border-color:var(--amber);box-shadow:0 0 0 4px rgba(255,196,77,.25)}
+.stops .tm{text-align:right;font-variant-numeric:tabular-nums}.stops .dl{text-align:right;font-size:12px;font-weight:800;color:var(--red)}
+.stops .dl.ok{color:var(--green)}
+.bars{display:flex;align-items:flex-end;gap:5px;height:90px;padding:6px 2px 0}
+.bars div{flex:1;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#3d8bff,#1d4fc0)}
+.bars div.hi{background:linear-gradient(180deg,#7ad7ff,#2f7bff);box-shadow:0 0 10px rgba(90,180,255,.6)}
+.bl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px}
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:340px;color:var(--muted);text-align:center}
+.placeholder svg{width:180px;opacity:.7}
+.back{display:none}
+
+/* 편성 모아보기 */
+.feed .ent{cursor:pointer}
+
+/* ── 모바일 ── */
+.bottom{display:none}
+@media (max-width:980px){
+  .side{display:none}
+  .top{padding:14px 14px 4px}.top h1{font-size:17px}.top .meta .upd{display:none}
+  .grid{grid-template-columns:1fr;padding:8px 12px 90px;gap:12px}
+  .card{padding:14px;border-radius:16px}
+  #detail{position:fixed;inset:0;z-index:30;overflow:auto;background:var(--bg);padding:12px 12px 90px;display:none}
+  #detail.open{display:block}
+  .back{display:inline-flex;align-items:center;gap:6px;margin:2px 0 10px;background:none;border:0;color:var(--blue2);font-weight:800;font-size:15px;cursor:pointer}
+  .two{grid-template-columns:1fr}
+  .row{grid-template-columns:58px 96px 1fr auto;gap:8px;padding:10px 4px}
+  .bottom{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(8,14,34,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+  .bottom button{flex:1;background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:6px 0;cursor:pointer}
+  .bottom button svg{width:22px;height:22px}
+  .bottom button.on{color:var(--blue2)}
+  .hero .title{font-size:30px}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-board" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M9 21l-2-4M15 21l2-4"/><circle cx="9" cy="14" r=".6"/><circle cx="15" cy="14" r=".6"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="12" r="2.2"/><circle cx="6" cy="18" r="2.2"/><path d="M8 6.8l8 4.4M8 17.2l8-4.4"/></symbol>
+  <symbol id="i-form" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 11a4 4 0 1 0-8 0"/><circle cx="12" cy="6" r="3"/><path d="M3 21v-1a6 6 0 0 1 6-6h6a6 6 0 0 1 6 6v1"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="logo" viewBox="0 0 64 64"><defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#5aa0ff"/><stop offset="1" stop-color="#9fe0ff"/></linearGradient></defs>
+    <rect x="4" y="4" width="56" height="56" rx="16" fill="#0f2257" stroke="url(#lg)" stroke-width="2"/>
+    <path d="M14 42c10-2 20-10 36-22" stroke="url(#lg)" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M14 50c12-2 24-11 38-24" stroke="#2f7bff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>
+    <circle cx="44" cy="22" r="4" fill="#fff"/></symbol>
+  <symbol id="train-art" viewBox="0 0 400 140">
+    <defs><linearGradient id="tb" x1="0" x2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".0"/><stop offset=".35" stop-color="#eef3ff"/><stop offset="1" stop-color="#cfd9f2"/></linearGradient>
+      <linearGradient id="tw" x1="0" x2="1"><stop offset="0" stop-color="#0b1430"/><stop offset="1" stop-color="#2a3d70"/></linearGradient></defs>
+    <path d="M0 100 L300 100 C350 100 392 92 398 78 C380 56 330 42 270 40 L0 40 Z" fill="url(#tb)"/>
+    <path d="M120 54 L262 54 C300 55 334 62 356 72 L340 76 C300 70 280 68 250 68 L120 68 Z" fill="url(#tw)" opacity=".9"/>
+    <path d="M0 86 L330 86 C360 86 380 83 392 80" stroke="var(--accent,#2f7bff)" stroke-width="5" fill="none"/>
+    <rect x="0" y="104" width="400" height="3" fill="#ffffff" opacity=".25"/>
+    <circle cx="378" cy="82" r="3" fill="#fff8c0"/>
+  </symbol>
+</svg>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><svg width="64" height="64"><use href="#logo"/></svg><div class="name" id="siteName">레일보드</div><div class="sub">친구들과 보는 열차 정보</div></div>
+    <nav class="nav">
+      <button data-view="board" class="on"><svg><use href="#i-board"/></svg>시간표</button>
+      <button data-view="map"><svg><use href="#i-map"/></svg>노선도</button>
+      <button data-view="form"><svg><use href="#i-form"/></svg>편성 모아보기</button>
+    </nav>
+    <div class="foot"><span class="dot" id="liveDot"></span><span id="liveTxt">연결 확인 중…</span><div style="margin-top:6px" id="footTime"></div></div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <h1 id="pageTitle">실시간 열차 정보</h1><span class="sp"></span>
+      <div class="meta"><span id="demoTag" class="hidden" style="color:var(--amber);font-weight:800">예시 데이터</span>
+        <span class="upd">마지막 갱신 <b id="lastUpd">-</b></span>
+        <button class="iconbtn" id="refreshBtn" title="새로고침"><svg><use href="#i-refresh"/></svg></button></div>
+    </header>
+
+    <div class="grid">
+      <div>
+        <!-- 시간표 -->
+        <section id="v-board">
+          <div class="card glow">
+            <div class="seg" id="modeSeg"><button data-mode="intercity" class="on">간선 · KTX</button><button data-mode="urban">도시철도</button></div>
+            <div class="form">
+              <label class="wide hidden" id="regionWrap">지역<select id="region"></select></label>
+              <label class="wide">노선<select id="line"></select></label>
+              <label class="wide">역<select id="station"></select></label>
+              <label>날짜<input type="date" id="date"></label>
+              <label>시간대<select id="span"><option value="60">지금부터 1시간</option><option value="120">2시간</option><option value="180">3시간</option><option value="custom">직접 입력</option></select></label>
+              <label class="hidden cus">시작<input type="time" id="from"></label>
+              <label class="hidden cus">끝<input type="time" id="to"></label>
+              <button class="btn" id="go">조회</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ch"><svg><use href="#i-board"/></svg><span id="boardTitle">열차 목록</span><span class="r" id="boardCount"></span></div>
+            <div id="boardMsg"></div>
+            <div class="list" id="board"></div>
+          </div>
+          <div id="rtWrap"></div>
+        </section>
+
+        <!-- 노선도 -->
+        <section id="v-map" class="hidden">
+          <div class="card glow">
+            <div class="ch"><svg><use href="#i-map"/></svg>노선도<span class="r" id="mapNote"></span></div>
+            <select id="mapRegion" style="margin-bottom:10px"></select>
+            <div class="chipbar"><button class="cbtn" id="chipL" aria-label="왼쪽으로">‹</button>
+              <div class="chips" id="mapChips"></div>
+              <button class="cbtn" id="chipR" aria-label="오른쪽으로">›</button></div>
+            <div class="dirs"><span>왼쪽 줄 · <b id="sideA">상행</b></span><span>오른쪽 줄 · <b id="sideB">하행</b></span></div>
+            <div class="mapbox" id="mapBox"></div>
+            <div class="legend"><span><i class="sq" style="background:#22c55e"></i>일반</span><span><span class="xb" style="background:var(--express);color:#fff;font-weight:800;font-size:10.5px;padding:1px 6px;border-radius:5px">동인천급행</span>급행·특급 (행선지+종류)</span>
+              <span><i class="sq" style="background:#5b6584"></i>운행 종료(종점에 정차)</span><span style="color:var(--amber)">친구가 입력한 편성</span></div>
+            <div class="small" id="mapTrack" style="margin-top:6px"></div>
+          </div>
+        </section>
+
+        <!-- 편성 모아보기 -->
+        <section id="v-form" class="hidden">
+          <div class="card glow feed">
+            <div class="ch"><svg><use href="#i-form"/></svg>최근 친구들이 올린 편성<span class="r" id="feedCount"></span></div>
+            <div id="feed"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- 열차 상세 -->
+      <section id="detail">
+        <button class="back" id="backBtn">‹ 목록으로</button>
+        <div id="detailBody">
+          <div class="card placeholder"><svg viewBox="0 0 400 140"><use href="#train-art"/></svg>
+            <div>왼쪽 목록이나 노선도에서 <b>열차를 누르면</b><br>편성·정차역·지연 기록이 여기에 나와요.</div></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom">
+  <button data-view="board" class="on"><svg><use href="#i-board"/></svg>시간표</button>
+  <button data-view="map"><svg><use href="#i-map"/></svg>노선도</button>
+  <button data-view="form"><svg><use href="#i-form"/></svg>편성</button>
+</nav>
+
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+let META = null, URBAN = [], mode = "intercity", view = "board", loadSeq = 0, mapSeq = 0, timer = null;
+let current = null;           // 열려 있는 열차 상세 요청 파라미터
+const store = {get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+const pad = n => String(n).padStart(2, "0");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const isMobile = () => matchMedia("(max-width:980px)").matches;
+const ymdOf = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+const today = () => ymdOf(new Date());
+async function getJSON(u){ const r = await fetch(u); return r.json(); }
+async function postJSON(u, b){ const r = await fetch(u, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(b)}); return r.json(); }
+function stamp(){ const d=new Date(); $("#lastUpd").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
+setInterval(()=>{ const d=new Date(); $("#footTime").textContent = `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; },1000);
+
+function fmtDelay(sec){                       // 초 → '+1분 20초', '9초', '정시'
+  if (sec == null) return "";
+  const a = Math.abs(sec), m = Math.floor(a / 60), s = a % 60;
+  if (a < 10) return "정시";
+  const t = m ? `${m}분${s ? " " + s + "초" : ""}` : `${s}초`;
+  return sec < 0 ? `${t} 일찍` : `+${t}`;
+}
+function endText(t){                           // 운행 종료 문구 (rail.blue 처럼)
+  if (t.delay == null) return "운행 종료";
+  if (Math.abs(t.delay) < 10) return "정시 운행 종료";
+  return t.delay > 0 ? `${fmtDelay(t.delay).slice(1)} 지연으로 운행 종료` : `${fmtDelay(t.delay)} 운행 종료`;
+}
+function gclass(name){ const n=String(name||"").toUpperCase();
+  if(n.includes("SRT"))return"srt"; if(n.includes("와인"))return"wine"; if(n.includes("청룡"))return"cheongryong";
+  if(n.includes("이음"))return"eum"; if(n.includes("산천"))return"sancheon"; if(n.includes("KTX"))return"ktx";
+  if(n.includes("ITX")||n.includes("새마을"))return"itx"; if(n.includes("무궁화")||n.includes("누리로"))return"mugunghwa";
+  if(n.includes("급행"))return"express"; return"local"; }
+
+/* ── 화면 전환 ── */
+const TITLES = {board:"실시간 열차 정보", map:"노선도 · 실시간 열차 위치", form:"친구들과 편성 공유"};
+function setView(v){
+  view = v;
+  $$("[data-view]").forEach(b => b.classList.toggle("on", b.dataset.view === v));
+  ["board","map","form"].forEach(x => $("#v-"+x).classList.toggle("hidden", x !== v));
+  $("#pageTitle").textContent = TITLES[v];
+  if (v === "map") loadMap(); if (v === "form") loadFeed();
+}
+$$("[data-view]").forEach(b => b.onclick = () => setView(b.dataset.view));
+
+/* ── 시간표 ── */
+function fill(sel, items, keep){ const p = sel.value; sel.innerHTML = items.map(([v,t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join(""); if (keep && items.some(([v]) => v === p)) sel.value = p; }
+async function ensureUrban(){ if (!URBAN.length){ const d = await getJSON("/api/urban/lines"); URBAN = d.lines || []; } return URBAN; }
+function regions(){ return [...new Set(URBAN.map(l => l.region))]; }
+function refreshLines(){
+  if (mode === "intercity"){ $("#regionWrap").classList.add("hidden"); fill($("#line"), META.intercity.map(l => [l.id, l.name]), true); }
+  else { $("#regionWrap").classList.remove("hidden"); fill($("#region"), regions().map(r => [r,r]), true);
+    fill($("#line"), URBAN.filter(l => l.region === $("#region").value).map(l => [l.key, `${l.name} · ${l.operator}`]), true); }
+  refreshStations();
+}
+function refreshStations(){
+  if (mode === "intercity"){ const l = META.intercity.find(l => l.id === $("#line").value); fill($("#station"), (l?l.stations:[]).map(s => [s,s]), true); }
+  else { const l = URBAN.find(l => l.key === $("#line").value); fill($("#station"), (l?l.stations:[]).map(s => [s.code, s.name]), true); }
+}
+function windowParams(){
+  const span = $("#span").value; const d = new Date();
+  let from = `${pad(d.getHours())}${pad(d.getMinutes())}`, to;
+  if (span === "custom"){ from = ($("#from").value || "00:00").replace(":",""); to = ($("#to").value || "23:59").replace(":",""); }
+  else { const e = new Date(d.getTime() + (+span)*60e3); to = `${pad(e.getHours())}${pad(e.getMinutes())}`; }
+  return {date: $("#date").value.replaceAll("-",""), from, to};
+}
+$("#span").onchange = () => $$(".cus").forEach(x => x.classList.toggle("hidden", $("#span").value !== "custom"));
+
+function rowHTML(tr, m, live){
+  const isIc = m === "intercity";
+  const timeSub = isIc ? (tr.status === "시발" ? "출발" : tr.status === "종착" ? "도착" : (tr.arr && tr.arr !== tr.dep ? "도착 "+esc(tr.arr) : "출발")) : (tr.status === "종착" ? "도착" : "출발");
+  const dest = isIc ? `${esc(tr.to)}행` : esc(tr.to);
+  const sub = isIc ? `${esc(tr.from)} → ${esc(tr.to)} · ${esc(tr.direction)}` : `${tr.from ? esc(tr.from)+"발 · " : ""}${tr.arr ? "도착 "+esc(tr.arr) : ""}${tr.arr && tr.dep ? " · " : ""}${tr.dep ? "출발 "+esc(tr.dep) : ""}`;
+  const fm = !isIc && tr.formation ? ` <span class="fm">${esc(tr.formation)}</span>` : (isIc && tr.custom_vehicle ? ` <span class="fm">✎</span>` : "");
+  return `<div class="row" data-no="${esc(tr.train_no)}">
+    <div class="t">${esc(tr.time)}<small>${timeSub}</small></div>
+    <div><span class="badge b-${tr.grade_class}">${esc(tr.grade || "열차")}</span><div class="no">${esc(tr.train_no)}열차${fm}</div></div>
+    <div class="dest">${dest}<small>${sub}</small></div>
+    <div class="st">${tr.live ? liveCell(tr.live) : (live ? `<span class="live">● ${esc(live)}</span>` : esc(tr.status))}</div></div>`;
+}
+
+function liveCell(l){
+  if (l.parked) return `<span style="color:var(--muted)">${esc(endText(l))}</span>`;
+  const d = l.delay == null ? "" : `<b style="color:${l.delay >= 60 ? "var(--red)" : "var(--green)"}">${esc(fmtDelay(l.delay))}</b><br>`;
+  return `${d}<span class="live">● ${esc(l.where)} ${esc(l.status)}</span>`;
+}
+async function loadBoard(){
+  const m = mode, seq = ++loadSeq, w = windowParams();
+  const line = $("#line").value, station = $("#station").value;
+  const stName = $("#station").selectedOptions[0]?.textContent || "", lineName = $("#line").selectedOptions[0]?.textContent || "";
+  const p = new URLSearchParams({line, station, ...w});
+  $("#boardMsg").innerHTML = `<div class="small">불러오는 중…</div>`;
+  let data;
+  try { data = await getJSON(`/api/board/${m}?${p}`); } catch(e){ if (seq !== loadSeq) return; $("#boardMsg").innerHTML = `<div class="err">서버에 연결할 수 없습니다.</div>`; return; }
+  if (seq !== loadSeq) return;
+  const capital = m === "urban" && ($("#region").value || "").startsWith("수도권");
+  let rt = null;
+  if (capital){ try { rt = await getJSON(`/api/realtime/seoul?station=${encodeURIComponent(stName)}`); } catch(e){ rt = {error:"실시간 정보를 불러오지 못했습니다."}; } }
+  if (seq !== loadSeq) return;
+  const liveByNo = {}; (rt?.rows || []).forEach(r => { if (r.train_no) liveByNo[r.train_no.replace(/^0+/,"")] = r.msg; });
+  $("#boardTitle").textContent = `${lineName} ${stName}`;
+  $("#boardCount").textContent = `${data.day ? data.day+" · " : ""}${(data.trains||[]).length}편`;
+  let msg = data.error ? `<div class="err">${esc(data.error)}</div>` : "";
+  (data.warnings||[]).slice(0,4).forEach(x => msg += `<div class="warn">⚠ ${esc(x)}</div>`);
+  if (data.note) msg += `<div class="small" style="margin-bottom:6px">${esc(data.note)}</div>`;
+  $("#boardMsg").innerHTML = msg;
+  const trains = data.trains || [];
+  $("#board").innerHTML = trains.length ? trains.map(tr => rowHTML(tr, m, liveByNo[String(tr.train_no).replace(/^0+/,"")])).join("") : `<div class="empty">이 시간대에 열차가 없습니다.</div>`;
+  $$("#board .row").forEach((el, i) => el.onclick = () => {
+    $$("#board .row").forEach(x => x.classList.remove("sel")); el.classList.add("sel");
+    const tr = trains[i];
+    openDetail(m === "intercity"
+      ? {kind:"ic", no:tr.train_no, line, station: stName, from:tr.from, to:tr.to, dep:tr.dep, time:tr.time, grade:tr.grade, grade_raw:tr.grade_raw||"", date:w.date, label:`${lineName} ${tr.train_no}열차`}
+      : {kind:"urban", no:tr.train_no, line, to:tr.to, grade:tr.grade, date:w.date, label:`${lineName} ${tr.train_no}열차`});
+  });
+  // 실시간 패널
+  let h = "";
+  if (capital){
+    h = `<div class="card"><div class="ch"><span class="dot"></span>실시간 도착 (서울시)<span class="r">${esc(stName)}</span></div>`;
+    if (rt?.error) h += `<div class="err">${esc(rt.error)}</div>`;
+    else if (rt && rt.available === false) h += `<div class="small">서울 실시간 인증키를 넣으면 지금 오는 열차가 표시됩니다.</div>`;
+    else if (!rt?.rows?.length) h += `<div class="small">실시간 정보가 없습니다.</div>`;
+    else h += rt.rows.map(r => `<div class="ent"><span class="badge b-${String(r.kind).includes("급행")?"express":"local"}">${esc(r.line)}</span>
+      <div><div class="v">${esc(r.heading || r.dest+"행")}</div><div class="w">${esc(r.updn)} · ${esc(r.train_no)}열차</div></div>
+      <span style="margin-left:auto;color:var(--green);font-weight:800;font-size:13px;text-align:right">${esc(r.msg)}</span></div>`).join("");
+    h += `</div>`;
+  }
+  $("#rtWrap").innerHTML = h;
+  stamp();
+}
+
+$$("#modeSeg button").forEach(b => b.onclick = async () => {
+  $$("#modeSeg button").forEach(x => x.classList.toggle("on", x === b)); mode = b.dataset.mode;
+  if (mode === "urban") await ensureUrban();
+  refreshLines(); loadBoard();
+});
+$("#region").onchange = () => { refreshLines(); };
+$("#line").onchange = refreshStations;
+$("#go").onclick = () => loadBoard();
+
+/* ── 노선도 ── */
+async function loadMap(){
+  await ensureUrban();
+  if (!$("#mapRegion").options.length){ fill($("#mapRegion"), regions().map(r => [r,r])); }
+  const lines = sortLines(URBAN.filter(l => l.region === $("#mapRegion").value));
+  const box = $("#mapChips");
+  if (!lines.some(l => l.key === box.dataset.sel)) box.dataset.sel = lines[0]?.key || "";
+  const sig = lines.map(l => l.key).join(",");
+  if (box.dataset.sig !== sig){                 // 지역이 바뀔 때만 다시 그림 (스크롤 위치 유지)
+    const dup = {}; lines.forEach(l => dup[l.name] = (dup[l.name] || 0) + 1);
+    box.innerHTML = lines.map(l => `<button class="chip" data-k="${esc(l.key)}">${esc(l.name)}${dup[l.name] > 1 ? ` <small style="opacity:.7">${esc(l.operator)}</small>` : ""}</button>`).join("");
+    box.dataset.sig = sig; box.scrollLeft = 0;
+    $$("#mapChips .chip").forEach(c => c.onclick = () => { if (box.dataset.moved === "1") return; box.dataset.sel = c.dataset.k; loadMap(); });
+    setTimeout(() => { const on = box.querySelector(".chip.on"); if (on) on.scrollIntoView({inline:"center", block:"nearest"}); updateChipBtns(); }, 0);
+  }
+  $$("#mapChips .chip").forEach(c => c.classList.toggle("on", c.dataset.k === box.dataset.sel));
+  updateChipBtns();
+  const key = box.dataset.sel; if (!key) return;
+  const L = URBAN.find(l => l.key === key), seq = ++mapSeq;
+  const d = await getJSON(`/api/linemap?line=${encodeURIComponent(key)}`);
+  if (seq !== mapSeq || view !== "map") return;
+  if (d.error){ $("#mapBox").innerHTML = `<div class="err" style="margin:0 12px">${esc(d.error)}</div>`; return; }
+  const [sa, sb] = d.sides || ["상행", "하행"];
+  $("#sideA").textContent = sa; $("#sideB").textContent = sb;
+  $("#mapNote").textContent = d.note || (d.realtime ? `${d.trains.filter(t => !t.parked).length}대 운행 중` : "");
+  $("#mapTrack").textContent = d.tracking_note || "";
+  const by = {}; d.trains.slice().sort((a, b) => (a.parked?1:0) - (b.parked?1:0)).forEach(t => (by[t.i+t.side] ||= []).push(t));
+  const chip = t => `<span class="tr ${t.express?"exp":""} ${t.parked?"park":""} ${t.stale?"stale":""}" data-no="${esc(t.no)}" data-to="${esc(t.dest)}" data-g="${esc(t.express_label || "일반")}"><i></i>${t.express_label ? `<span class="xb">${esc(t.express_label)}</span>` : ""}${esc(t.no)}${!t.parked && t.delay != null ? ` <span class="${t.delay >= 60 ? "late" : "ontime"}" ${t.delay_old ? 'style="opacity:.55" title="' + esc(t.delay_at || "") + '에서 잰 값"' : ""}>${t.delay_old ? "직전 " : ""}${esc(fmtDelay(t.delay))}</span>` : ""}${t.formation ? ` <span class="fm">${esc(t.formation)}</span>` : ""}<span class="ss">${esc(t.parked ? endText(t) : (t.status||""))}</span></span>`;
+  $("#mapBox").innerHTML = d.stations.map((n, i) => `<div class="mrow"><i class="rail"></i>
+    <div class="ma">${(by[i+"a"]||[]).map(chip).join("")}</div><i class="stn"></i><div class="mb">${(by[i+"b"]||[]).map(chip).join("")}</div>
+    <span class="sname">${esc(n)}</span></div>`).join("") || `<div class="empty">역 정보가 없습니다.</div>`;
+  $$("#mapBox .tr").forEach(el => el.onclick = () => {
+    $$("#mapBox .tr").forEach(x => x.classList.remove("sel")); el.classList.add("sel");
+    openDetail({kind:"urban", no: el.dataset.no, line: key, to: el.dataset.to + "행", grade: el.dataset.g || "일반", date: today(), label: `${L.name} ${el.dataset.no}열차`});
+  });
+  stamp();
+}
+$("#mapRegion").onchange = () => { $("#mapChips").dataset.sel = ""; loadMap(); };
+
+/* 노선 버튼 줄: 좌우 버튼·마우스 휠·끌어서 이동 */
+function sortLines(ls){
+  const num = n => { const m = String(n).match(/^(\d+)호선/); return m ? +m[1] : null; };
+  return ls.slice().sort((a, b) => {
+    const x = num(a.name), y = num(b.name);
+    if (x != null && y != null) return x - y || String(a.operator).localeCompare(b.operator);
+    if (x != null) return -1; if (y != null) return 1;
+    return String(a.name).localeCompare(b.name, "ko");
+  });
+}
+function updateChipBtns(){
+  const b = $("#mapChips");
+  $("#chipL").disabled = b.scrollLeft <= 2;
+  $("#chipR").disabled = b.scrollLeft + b.clientWidth >= b.scrollWidth - 2;
+}
+(() => {
+  const b = $("#mapChips");
+  $("#chipL").onclick = () => b.scrollBy({left: -Math.max(200, b.clientWidth * 0.7), behavior: "smooth"});
+  $("#chipR").onclick = () => b.scrollBy({left: Math.max(200, b.clientWidth * 0.7), behavior: "smooth"});
+  b.addEventListener("scroll", updateChipBtns, {passive: true});
+  window.addEventListener("resize", updateChipBtns);
+  b.addEventListener("wheel", e => {            // 세로 휠을 가로 이동으로
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && b.scrollWidth > b.clientWidth){ e.preventDefault(); b.scrollLeft += e.deltaY; }
+  }, {passive: false});
+  let down = null;                               // 마우스로 끌어서 이동
+  b.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse") return; down = {x: e.clientX, l: b.scrollLeft}; b.dataset.moved = "0"; });
+  window.addEventListener("pointermove", e => {
+    if (!down) return; const dx = e.clientX - down.x;
+    if (Math.abs(dx) > 5){ b.dataset.moved = "1"; b.classList.add("drag"); b.scrollLeft = down.l - dx; }
+  });
+  window.addEventListener("pointerup", () => { if (!down) return; down = null; b.classList.remove("drag"); setTimeout(() => b.dataset.moved = "0", 0); });
+})();
+
+/* ── 편성 모아보기 ── */
+const AVC = ["#9c1d47","#159aa8","#2f6fed","#7a3dd8","#2f9a4a","#d97706","#d9473b"];
+const avColor = n => AVC[[...String(n)].reduce((a,c) => a + c.charCodeAt(0), 0) % AVC.length];
+async function loadFeed(){
+  const d = await getJSON("/api/formations/recent");
+  const es = d.entries || [];
+  $("#feedCount").textContent = `${es.length}건`;
+  $("#feed").innerHTML = es.length ? es.map(e => `<div class="ent"><div class="av" style="background:${avColor(e.name)}">${esc(e.name[0])}</div>
+    <div><div class="v">${esc(e.text)}</div><div class="w">${esc(e.label || e.key)} · ${esc(e.name)} · ${e.date.slice(4,6)}/${e.date.slice(6)} ${esc(e.time)}${e.where ? " · "+esc(e.where) : ""}</div></div>
+    <span class="like">👍 ${e.likes.length}</span></div>`).join("") : `<div class="empty">아직 올라온 편성이 없어요.<br>시간표나 노선도에서 열차를 눌러 첫 편성을 올려 보세요.</div>`;
+}
+
+/* ── 열차 상세 ── */
+function nick(){ return store.get("rb_nick") || ""; }
+async function openDetail(q){
+  current = q;
+  if (isMobile()){ $("#detail").classList.add("open"); $("#detail").scrollTop = 0; }
+  $("#detailBody").innerHTML = `<div class="card placeholder">불러오는 중…</div>`;
+  const p = new URLSearchParams(Object.fromEntries(Object.entries(q).filter(([k,v]) => v != null && v !== "")));
+  const d = await getJSON(`/api/train?${p}`);
+  if (current !== q) return;
+  renderDetail(d, q);
+}
+function renderDetail(d, q){
+  if (d.error){ $("#detailBody").innerHTML = `<div class="err">${esc(d.error)}</div>`; return; }
+  const gc = d.grade_class || gclass(d.title);
+  const y = d.stops?.length ? d.stops[d.stops.length-1].yesterday : null;
+  let h = `<div class="hero g-${gc}" style="--accent:${gc==="wine"?"#ff4f86":"#2f7bff"}">
+    <svg class="train" viewBox="0 0 400 140"><use href="#train-art"/></svg>
+    <div class="k">#${esc(d.train_no)} · ${esc(d.line_name)}</div>
+    <div class="title">${esc(d.title)}</div>
+    <div class="route">${esc(d.route)}</div>
+    <div class="bd"><span class="pill">${esc(d.grade)}</span>${d.formations?.length ? `<span class="pill">친구 ${new Set(d.formations.flatMap(e => e.likes)).size}명 확인</span>` : ""}${y != null ? (y > 0 ? `<span class="pill red">어제 +${y}분 도착</span>` : `<span class="pill">어제 정시 도착</span>`) : ""}</div></div>`;
+
+  // 실시간 지연 (수도권 도시철도)
+  if (d.live){
+    const l = d.live, b = l.basis;
+    h += `<div class="card" style="margin-top:14px"><div class="ch"><span class="dot"></span>실시간 지연<span class="r">${esc(l.where)} ${esc(l.parked ? "" : l.status || "")}</span></div>
+      <div style="font-size:22px;font-weight:900;color:${(l.delay||0) >= 60 ? "var(--red)" : "var(--green)"}">${l.parked ? esc(endText(l)) : (l.delay == null ? "아직 계산 전" : esc(fmtDelay(l.delay)))}</div>
+      ${l.delay_old && !l.parked ? `<div class="small">지금은 역 사이라 <b>${esc(l.delay_at)}</b>에서 잰 값이에요.</div>` : ""}
+      ${b ? `<div class="small" style="margin-top:8px;line-height:1.7">계산 근거 · ${esc(b.station)} ${esc(b.plan_kind)} 예정 <b>${esc(b.plan)}</b> → 서울시 수신 <b>${esc(b.actual)}</b> (${esc(b.status)})<br>시간표 열차번호 ${esc(b.trn)} · 서울시 시각은 실제 도착보다 수십 초 늦게 찍힐 수 있어요.</div>` : ""}
+    </div>`;
+  }
+
+  // 편성 카드
+  h += `<div class="card" style="margin-top:14px"><div class="ch"><svg><use href="#i-form"/></svg>오늘의 편성<span class="r">직접 보거나 탄 열차만 올려 주세요</span></div>
+    <div class="fin"><input id="fText" maxlength="40" placeholder="본 편성 (예: 와인산천, 청산천 중련, 2-15편성)">
+      <input id="fName" maxlength="12" placeholder="내 이름" value="${esc(nick())}"><input id="fWhere" maxlength="30" placeholder="본 곳 (선택)">
+      <button class="btn" id="fSend">등록</button></div><div id="fErr"></div>
+    <div id="fList" style="margin-top:6px"></div></div>`;
+
+  // 정차역 + 지연
+  const hasStops = d.stops && d.stops.length;
+  if (!hasStops && !d.history){ if (d.note) h += `<div class="small" style="margin:12px 4px">ℹ ${esc(d.note)}</div>`; }
+  else {
+    h += `<div class="${hasStops ? "two" : ""}" style="${hasStops ? "" : "margin-top:14px"}">`;
+    if (hasStops){
+      const hasY = d.stops.some(s => s.yesterday != null);
+      h += `<div class="card stops"><div class="ch"><svg><use href="#i-pin"/></svg>정차역 · 시간표<span class="r">${d.now_after != null && d.now_after >= 0 && d.now_after < d.stops.length-1 ? "지금쯤 "+esc(d.stops[d.now_after].name)+" 지남" : ""}</span></div>
+        <div class="sr h"><i></i><span>역</span><span class="tm">도착</span><span class="tm">출발</span><span class="tm">${hasY?"어제":""}</span></div>`;
+      d.stops.forEach((s, i) => {
+        const cls = d.now_after == null ? "" : (i <= d.now_after ? "done" : "");
+        h += `<div class="sr ${cls}"><i class="pin"></i><span>${esc(s.name)}</span><span class="tm">${esc(s.arr)}</span><span class="tm">${esc(s.dep)}</span>
+          <span class="dl ${s.yesterday!=null && s.yesterday<=0?"ok":""}">${s.yesterday==null?"":(s.yesterday===0?"정시":s.yesterday<0?s.yesterday:"+"+s.yesterday)}</span></div>`;
+        if (d.now_after === i && i < d.stops.length-1) h += `<div class="sr now"><i class="pin"></i><span><b>지금쯤 여기</b></span><span></span><span></span><span></span></div>`;
+      });
+      h += `</div>`;
+    }
+    h += `<div class="card"><div class="ch"><svg><use href="#i-chart"/></svg>최근 14일 지연${d.history && d.history.some(v => v != null) ? `<span class="r">평균 ${(() => { const v = d.history.filter(x => x != null); const a = v.reduce((p,c)=>p+c,0)/v.length; return (a>=0?"+":"") + a.toFixed(1); })()}분</span>` : ""}</div>`;
+    if (d.history){ const vals = d.history.filter(v => v != null), mx = Math.max(5, ...vals.map(v => Math.max(0, v)));
+      const days = d.history_days || [];
+      h += `<div class="bars">${d.history.map((v, i) => v == null
+          ? `<div style="height:4%;background:#26314f" title="${esc(days[i]||"")} 운행 기록 없음"></div>`
+          : `<div class="${v>=5?"hi":""}" style="height:${Math.max(4, Math.max(0,v)/mx*100)}%" title="${esc(days[i]||"")} ${v>0?"+"+v+"분":v<0?v+"분(일찍)":"정시"}"></div>`).join("")}</div>
+        <div class="bl"><span>${esc(days[0] || "14일 전")}</span><span>${esc(days[days.length-1] || "어제")}</span></div>
+        <div class="small" style="margin-top:6px">5분 이상 늦은 날 ${vals.filter(v => v >= 5).length}일 · 가장 늦은 날 +${Math.max(0, ...vals)}분${d.history_note ? "<br>" + esc(d.history_note) : ""}</div>`;
+    } else h += `<div class="small">${esc(d.note || "기록이 없습니다.")}</div>`;
+    h += `</div></div>`;
+  }
+  $("#detailBody").innerHTML = h;
+  renderFormations(d.formations || [], d.key, q);
+  $("#fSend").onclick = async () => {
+    const text = $("#fText").value.trim(), name = $("#fName").value.trim();
+    if (!text){ $("#fErr").innerHTML = `<div class="warn">편성을 입력하세요.</div>`; return; }
+    if (!name){ $("#fErr").innerHTML = `<div class="warn">이름을 입력하세요. 다음부터는 자동으로 채워져요.</div>`; return; }
+    store.set("rb_nick", name);
+    const r = await postJSON("/api/formations", {key:d.key, date:q.date || today(), text, name, where:$("#fWhere").value.trim(), label:q.label || ""});
+    if (r.error){ $("#fErr").innerHTML = `<div class="err">${esc(r.error)}</div>`; return; }
+    $("#fText").value = ""; $("#fErr").innerHTML = "";
+    openDetail(q);                                   // 제목·배지에 바로 반영
+    if (view === "board") loadBoard(); else if (view === "map") loadMap();
+  };
+}
+function renderFormations(list, key, q){
+  const me = nick();
+  $("#fList").innerHTML = list.length ? list.map(e => `<div class="ent"><div class="av" style="background:${avColor(e.name)}">${esc(e.name[0])}</div>
+    <div><div class="v">${esc(e.text)}</div><div class="w">${esc(e.name)} · ${esc(e.time)}${e.where ? " · "+esc(e.where) : ""}</div></div>
+    <button class="like ${me && e.likes.includes(me) ? "on" : ""}" data-id="${esc(e.id)}">👍 ${e.likes.length}</button></div>`).join("")
+    : `<div class="small" style="padding:8px 2px">아직 아무도 안 올렸어요. 첫 번째로 올려 보세요!</div>`;
+  $$("#fList .like").forEach(b => b.onclick = async () => {
+    const name = nick() || $("#fName").value.trim();
+    if (!name){ $("#fErr").innerHTML = `<div class="warn">👍를 누르려면 먼저 이름을 입력하세요.</div>`; return; }
+    store.set("rb_nick", name);
+    await postJSON("/api/formations/like", {id: b.dataset.id, name});
+    openDetail(q);
+  });
+}
+$("#backBtn").onclick = () => { $("#detail").classList.remove("open"); current = null; };
+
+/* ── 새로고침 ── */
+function refreshNow(){ if (view === "board") loadBoard(); else if (view === "map") loadMap(); else loadFeed(); }
+$("#refreshBtn").onclick = refreshNow;
+setInterval(() => { if (!document.hidden && view !== "map") refreshNow(); }, 30000);
+setInterval(() => { if (!document.hidden && view === "map") loadMap(); }, 15000);
+
+/* ── 시작 ── */
+(async () => {
+  META = await getJSON("/api/meta");
+  if (META.demo) $("#demoTag").classList.remove("hidden");
+  const k = META.keys || {};
+  $("#liveDot").classList.toggle("off", !k.seoul);
+  $("#liveTxt").textContent = META.demo ? "예시 데이터로 보는 중" : (k.seoul ? "실시간 연결됨" : "시간표 모드");
+  const d = new Date(); $("#date").value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  refreshLines();
+  $("#line").value = "gyeongbu_hs"; refreshStations(); $("#station").value = "대전";
+  loadBoard();
+})();
+</script>
+</body>
+</html>
