@@ -123,6 +123,7 @@ select,input{background:var(--bg2);border:1px solid var(--line2);border-radius:1
 .tr .ontime{color:var(--green);font-size:11px;font-weight:700}
 .tr.park{background:#141a2b;border-color:#2a3350;color:#7f8aa8}.tr.park i{background:#5b6584}.tr.park .ss{color:#7f8aa8}
 .tr.stale{opacity:.55;border-style:dashed}
+.tr.est{border-style:dashed}
 .tr.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber),0 0 14px rgba(255,196,77,.35)}
 .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px;color:var(--muted)}
 .legend span{display:flex;align-items:center;gap:5px}.sq{width:10px;height:10px;border-radius:3px;display:inline-block}
@@ -469,7 +470,7 @@ async function loadMap(){
   $("#mapNote").textContent = d.note || (d.realtime ? `${d.trains.filter(t => !t.parked).length}대 운행 중` : "");
   $("#mapTrack").textContent = d.tracking_note || "";
   const by = {}; d.trains.slice().sort((a, b) => (a.parked?1:0) - (b.parked?1:0)).forEach(t => (by[t.i+t.side] ||= []).push(t));
-  const chip = t => `<span class="tr ${t.express?"exp":""} ${t.parked?"park":""} ${t.stale?"stale":""}" data-no="${esc(t.no)}" data-to="${esc(t.dest)}" data-g="${esc(t.express_label || "일반")}"><i></i>${t.express_label ? `<span class="xb">${esc(t.express_label)}</span>` : ""}${esc(t.no)}${!t.parked && t.delay != null ? ` <span class="${t.delay >= 60 ? "late" : "ontime"}" ${t.delay_old ? 'style="opacity:.55" title="' + esc(t.delay_at || "") + '에서 잰 값"' : ""}>${t.delay_old ? "직전 " : ""}${esc(fmtDelay(t.delay))}</span>` : ""}${t.formation ? ` <span class="fm">${esc(t.formation)}</span>` : ""}<span class="ss">${esc(t.parked ? endText(t) : (t.status||""))}</span></span>`;
+  const chip = t => `<span class="tr ${t.express?"exp":""} ${t.parked?"park":""} ${t.stale?"stale":""} ${t.est?"est":""}" data-no="${esc(t.no)}" data-to="${esc(t.dest)}" data-g="${esc(t.express_label || "일반")}"><i></i>${t.express_label ? `<span class="xb">${esc(t.express_label)}</span>` : ""}${esc(t.no)}${!t.parked && t.delay != null ? ` <span class="${t.delay >= 60 ? "late" : "ontime"}" ${t.delay_old ? 'style="opacity:.55" title="' + esc(t.delay_at || "") + '에서 잰 값"' : ""}>${t.delay_old ? "직전 " : ""}${esc(fmtDelay(t.delay))}</span>` : ""}${t.formation ? ` <span class="fm">${esc(t.formation)}</span>` : ""}<span class="ss">${esc(t.parked ? endText(t) : (t.status||""))}</span></span>`;
   $("#mapBox").innerHTML = d.stations.map((n, i) => `<div class="mrow"><i class="rail"></i>
     <div class="ma">${(by[i+"a"]||[]).map(chip).join("")}</div><i class="stn"></i><div class="mb">${(by[i+"b"]||[]).map(chip).join("")}</div>
     <span class="sname">${esc(n)}</span></div>`).join("") || `<div class="empty">역 정보가 없습니다.</div>`;

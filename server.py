@@ -511,6 +511,14 @@ def _route_rows(region_code, ln=None):
         return []
 
 
+# GTX-A: 도시철도 시간표(KRIC)에 없어서 역 목록만 직접 넣는다. 위치는 서울 실시간 API로만 보여 준다.
+GTX_A_LINE = {"key": "GTX|A", "opr": "GTX", "ln": "A", "region": "수도권(서울·인천)", "operator": "SG레일",
+              "name": "GTX-A", "seoul_name": "GTX-A", "no_tt": True,
+              "stations": [("GA1", "운정중앙"), ("GA2", "킨텍스"), ("GA3", "대곡"), ("GA4", "연신내"),
+                           ("GA5", "서울역"), ("GA6", "수서"), ("GA7", "성남"), ("GA8", "구성"),
+                           ("GA9", "동탄")]}
+
+
 def urban_lines():
     def build():
         rows_all = []
@@ -554,7 +562,9 @@ def urban_lines():
         return result
 
     lines = disk_cache("kric_lines.json", 30, build)
-    manual = CFG.get("urban_lines_manual") or []
+    manual = list(CFG.get("urban_lines_manual") or [])
+    if not any("GTX" in str(L.get("name", "")).upper() for L in lines):
+        manual.append(dict(GTX_A_LINE, stations=list(GTX_A_LINE["stations"])))
     for m in manual:  # 수동 정의 노선 (자동 조회가 안 될 때)
         m.setdefault("key", f"{m['opr']}|{m['ln']}")
         m["stations"] = [s if isinstance(s, dict) else {"code": s[0], "name": s[1]}
@@ -638,6 +648,8 @@ def build_branch_lines(lines):
 
 def station_timetable(L, st, day):
     """역 하나의 시간표. 갈래 노선의 역은 여러 데이터(기관·노선)에 걸쳐 있을 수 있어 모두 합친다."""
+    if L.get("no_tt"):
+        raise ApiError(f"{L['name']}은(는) 공개 시간표가 없어요. 노선도에서 실시간 위치만 볼 수 있어요.")
     alts = st.get("alts") or [{"opr": L["opr"], "ln": L["ln"], "stin": st["code"]}]
     rows, seen_, err = [], set(), None
     for a in alts:
@@ -1037,16 +1049,39 @@ SEOUL_POS_URL = "http://swopenapi.seoul.go.kr/api/subway/{key}/json/realtimePosi
 POS_STATUS = {"0": "진입", "1": "도착", "2": "출발", "3": "전역출발"}
 
 
-def seoul_line_name(L):
+# 서울 실시간 API가 쓰는 노선 이름. KRIC 노선 이름에 아래 낱말이 들어 있으면 이 이름으로 바꾼다 (위에서부터 먼저 맞는 것).
+SEOUL_ALIASES = [
+    ("신분당", ["신분당선"]), ("분당", ["수인분당선"]), ("수인", ["수인분당선"]),
+    ("경의", ["경의중앙선"]), ("중앙", ["경의중앙선", "중앙선"]), ("공항", ["공항철도"]),
+    ("경춘", ["경춘선"]), ("우이", ["우이신설선"]), ("서해", ["서해선"]), ("경강", ["경강선"]),
+    ("신림", ["신림선"]), ("GTX", ["GTX-A"]),
+]
+# 서울 실시간 API에 없는 노선 (시간표 기준 위치로 보여 줌)
+NO_SEOUL_RT = ("인천", "의정부", "에버", "용인", "김포", "골드")
+
+
+def seoul_line_names(L):
+    """서울 실시간 API에 물어볼 노선 이름 후보들. 빈 목록이면 실시간 없음."""
     over = (CFG.get("seoul_line_names") or {}).get(L["key"])
     if over:
-        return over
+        return [over] if isinstance(over, str) else list(over)
     if L.get("seoul_name"):
-        return L["seoul_name"]
+        return [L["seoul_name"]]
     n = str(L.get("name", "")).strip()
-    if re.fullmatch(r"\d+", n):
-        return f"{n}호선"
-    return n
+    m = re.fullmatch(r"(?:서울\s*)?(?:도시철도\s*)?(\d+)\s*(?:호선)?", n)
+    if m and not any(w in n for w in NO_SEOUL_RT):
+        return [f"{int(m.group(1))}호선"]
+    if any(w in n for w in NO_SEOUL_RT):
+        return []
+    for w, cands in SEOUL_ALIASES:
+        if w in n.upper():
+            return cands
+    return [n]
+
+
+def seoul_line_name(L):
+    c = seoul_line_names(L)
+    return c[0] if c else ""
 
 
 def all_urban_lines():
@@ -1213,6 +1248,75 @@ class LineTracker:
 TRACKER = LineTracker()
 
 
+def _svc(sec):
+    """새벽 3시 전 시각은 전날 운행의 연장으로 본다."""
+    return None if sec is None else (sec + 86400 if sec < 3 * 3600 else sec)
+
+
+def timetable_positions(L, names, plan, now=None):
+    """실시간 위치가 없는 노선: 시간표대로라면 지금 열차가 어디 있는지 계산한다."""
+    now = now or dt.datetime.now(KST)
+    cur = _svc(now.hour * 3600 + now.minute * 60 + now.second)
+    idx = {norm_name(n): i for i, n in enumerate(names)}
+    fulls = {}
+    for ents in plan.values():
+        for full, ent in ents.items():
+            fulls[full] = ent
+    out = []
+    for full, ent in fulls.items():
+        pts = []
+        for nk, (a, d) in ent["st"].items():
+            i = idx.get(nk)
+            if i is None:
+                continue
+            a, d = _svc(a), _svc(d)
+            a = a if a is not None else d
+            d = d if d is not None else a
+            if a is None:
+                continue
+            pts.append((a, d, i))
+        if len(pts) < 2:
+            continue
+        pts.sort()
+        first, last = pts[0][0], pts[-1][1]
+        no = re.sub(r"^0+", "", full) or full
+        kind = ent.get("kind")
+        dest = names[pts[-1][2]]
+        up = pts[-1][2] < pts[0][2]
+        base = {"side": "a" if up else "b", "no": no, "dest": dest, "express": bool(kind), "kind": kind or "",
+                "express_label": f"{_plain(dest)}{kind}" if kind else "", "delay": None, "basis": None,
+                "delay_at": None, "est": True}
+        if cur > last:
+            if cur - last <= 15 * 60:          # 막 운행을 마친 열차는 종착역에 잠깐 남겨 둔다
+                out.append({**base, "i": pts[-1][2], "parked": True, "status": "운행 종료", "express": False})
+            continue
+        if cur < first:
+            continue
+        for k, (a, d, i) in enumerate(pts):
+            if a <= cur <= d:
+                out.append({**base, "i": i, "status": "시간표상 정차"})
+                break
+            if k + 1 < len(pts) and d < cur < pts[k + 1][0]:
+                nxt = pts[k + 1]
+                if nxt[0] - cur <= 60:
+                    out.append({**base, "i": nxt[2], "status": "시간표상 진입"})
+                else:
+                    out.append({**base, "i": i, "status": "시간표상 출발"})
+                break
+    return out
+
+
+def _seoul_pos_rows(line):
+    url = SEOUL_POS_URL.format(key=urllib.parse.quote(CFG["seoul_key"]), line=urllib.parse.quote(line))
+
+    def fetch():
+        try:
+            return find_items(http_json(url), ["trainNo", "statnNm"])
+        except Exception:
+            return []
+    return cached(("pos", line), 12, fetch)
+
+
 def linemap(line_key):
     L = next((x for x in all_urban_lines() if x["key"] == line_key), None)
     if not L:
@@ -1222,21 +1326,38 @@ def linemap(line_key):
     capital = str(L.get("region", "")).startswith("수도권")
     if is_demo():
         return demo_linemap(L, ymd)
-    if not (capital and CFG.get("seoul_key")):
-        return {"stations": names, "trains": [], "realtime": False,
-                "note": "이 지역은 실시간 열차 위치를 공개 API로 제공하지 않습니다."}
-    line = seoul_line_name(L)
-    url = SEOUL_POS_URL.format(key=urllib.parse.quote(CFG["seoul_key"]), line=urllib.parse.quote(line))
-
-    def fetch():
-        return find_items(http_json(url), ["trainNo", "statnNm"])
-    rows = cached(("pos", line), 12, fetch)
-    idx = {norm_name(n): i for i, n in enumerate(names)}
     sday = (dt.datetime.now(KST) - dt.timedelta(hours=3)).strftime("%Y%m%d")
     try:
-        plan = planned_line_times(L, day_code(sday))
+        plan = {} if L.get("no_tt") else planned_line_times(L, day_code(sday))
     except Exception:
         plan = {}
+    idx = {norm_name(n): i for i, n in enumerate(names)}
+    rows, line = [], ""
+    cands = seoul_line_names(L) if capital and CFG.get("seoul_key") else []
+    for cand in cands:
+        rs = _seoul_pos_rows(cand)
+        if any(norm_name(r.get("statnNm", "")) in idx for r in rs):
+            rows, line = rs, cand
+            break
+    tr = TRACKER.lines.get(line_key)
+    seen_today = bool(tr and tr["day"] == TRACKER.service_day(dt.datetime.now(KST)) and (tr["seen"] or tr["parked"]))
+    if not rows and seen_today and cands:          # 오늘 실시간을 받은 적 있으면 잠깐 끊겨도 실시간 모드 유지
+        line = cands[0]
+    elif not rows:                                   # 실시간이 없으면 시간표 기준 위치
+        trains = timetable_positions(L, names, plan) if plan else []
+        for t in trains:
+            t["formation"] = form_best(urban_key(line_key, t["no"]), ymd)
+        if plan:
+            n_run = sum(1 for t in trains if not t.get("parked"))
+            note = (f"시간표 기준 위치예요 (실시간 아님) · 운행 중 {n_run}대" if trains else
+                    "시간표상 지금 다니는 열차가 없어요.")
+        elif L.get("no_tt"):
+            note = "지금은 실시간 위치를 받지 못했어요. 이 노선은 공개 시간표가 없어 시간표 기준 위치도 못 그려요."
+        else:
+            note = "실시간 위치도, 시간표도 받지 못했어요."
+        return {"stations": names, "trains": trains, "realtime": False, "note": note,
+                "sides": ["상행·내선", "하행·외선"],
+                "tracking_note": "지연은 반영되지 않아요. 시간표대로 달린다고 가정한 위치예요." if trains else ""}
     live, by_no = [], {}
     rank = {"도착": 0, "출발": 1, "진입": 2, "전역출발": 3}
     for r in rows:
@@ -1266,11 +1387,36 @@ def linemap(line_key):
         t["formation"] = form_best(urban_key(line_key, t["no"]), ymd)
     n_run = sum(1 for t in trains if not t.get("parked"))
     n_park = len(trains) - n_run
-    note = (f"운행 중 {n_run}대 · 운행 종료 {n_park}대" if trains else
-            f"'{line}' 실시간 위치를 받지 못했습니다. (노선 이름이 서울 API와 다를 수 있음)" if not rows else "")
+    note = f"운행 중 {n_run}대 · 운행 종료 {n_park}대" if trains else ""
     return {"stations": names, "trains": trains, "realtime": True, "line": line, "note": note,
             "sides": ["상행·내선", "하행·외선"],
             "tracking_note": "운행 종료 열차는 이 서버가 켜진 뒤부터 본 열차만 표시됩니다."}
+
+
+def debug_lines():
+    """노선마다 시간표·실시간이 들어오는지 한눈에 본다 (/api/debug/lines)."""
+    lines = [L for L in all_urban_lines() if str(L.get("region", "")).startswith("수도권")]
+    day = day_code((dt.datetime.now(KST) - dt.timedelta(hours=3)).strftime("%Y%m%d"))
+
+    def one(L):
+        st = L["stations"][len(L["stations"]) // 2] if L["stations"] else None
+        tt = "역 없음"
+        if st and L.get("no_tt"):
+            tt = "공개 시간표 없음"
+        elif st:
+            try:
+                tt = f"{st['name']}역 {len(station_timetable(L, st, day))}건"
+            except Exception as e:
+                tt = f"{st['name']}역 오류: {e}"
+        rt = {}
+        if CFG.get("seoul_key"):
+            for c in seoul_line_names(L):
+                rt[c] = len(_seoul_pos_rows(c))
+        return {"name": L["name"], "key": L["key"], "operator": L.get("operator"),
+                "stations": len(L["stations"]), "timetable": tt,
+                "realtime": rt or "실시간 API 없음"}
+    with ThreadPoolExecutor(6) as ex:
+        return {"day": day, "lines": list(ex.map(one, lines))}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1687,6 +1833,8 @@ class Handler(BaseHTTPRequestHandler):
                                     "demo": bool(is_demo()), "available": bool(is_demo())})
                 else:
                     self.send_json({"rows": seoul_realtime(q.get("station", "")), "available": True})
+            elif u.path == "/api/debug/lines":
+                self.send_json(debug_lines())
             elif u.path == "/api/raw/urban":
                 self.send_json(urban_raw(q.get("line", ""), q.get("station", "")))
             elif u.path == "/api/linemap":
