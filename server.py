@@ -604,6 +604,62 @@ BRANCH_PATHS = {
 }
 
 
+# 한 노선이 여러 기관 데이터로 쪼개져 오는 경우(3·4·7·8호선, 서해선)는 한 줄로 합치고,
+# 한 목록에 갈래가 섞여 오는 경우(2·5호선, 경의중앙선)는 갈래별로 나눈다.
+_L2_LOOP = ["시청", "을지로입구", "을지로3가", "을지로4가", "동대문역사문화공원", "신당", "상왕십리", "왕십리",
+            "한양대", "뚝섬", "성수", "건대입구", "구의", "강변", "잠실나루", "잠실", "잠실새내", "종합운동장",
+            "삼성", "선릉", "역삼", "강남", "교대", "서초", "방배", "사당", "낙성대", "서울대입구", "봉천", "신림",
+            "신대방", "구로디지털단지", "대림", "신도림", "문래", "영등포구청", "당산", "합정", "홍대입구", "신촌",
+            "이대", "아현", "충정로"]
+_L5_MAIN = ["방화", "개화산", "김포공항", "송정", "마곡", "발산", "우장산", "화곡", "까치산", "신정", "목동",
+            "오목교", "양평", "영등포구청", "영등포시장", "신길", "여의도", "여의나루", "마포", "공덕", "애오개",
+            "충정로", "서대문", "광화문", "종로3가", "을지로4가", "동대문역사문화공원", "청구", "신금호", "행당",
+            "왕십리", "마장", "답십리", "장한평", "군자", "아차산", "광나루", "천호", "강동"]
+_GJ_NORTH = ["도라산", "임진강", "운천", "문산", "파주", "월롱", "금촌", "금릉", "운정", "야당", "탄현", "일산",
+             "풍산", "백마", "곡산", "대곡", "능곡", "행신", "강매", "화전", "수색", "디지털미디어시티", "가좌"]
+_GJ_EAST = ["홍대입구", "서강대", "공덕", "효창공원앞", "용산", "이촌", "서빙고", "한남", "옥수", "응봉", "왕십리",
+            "청량리", "회기", "중랑", "상봉", "망우", "양원", "구리", "도농", "양정", "덕소", "도심", "팔당",
+            "운길산", "양수", "신원", "국수", "아신", "오빈", "양평", "원덕", "용문", "지평"]
+BRANCH_PATHS.update({
+    "2호선": {"seoul_name": "2호선", "paths": [
+        ("2호선 · 순환선", _L2_LOOP),
+        ("2호선 · 성수지선", ["성수", "용답", "신답", "용두", "신설동"]),
+        ("2호선 · 신정지선", ["신도림", "도림천", "양천구청", "신정네거리", "까치산"])]},
+    "3호선": {"seoul_name": "3호선", "paths": [("3호선", [
+        "대화", "주엽", "정발산", "마두", "백석", "대곡", "화정", "원당", "원흥", "삼송", "지축", "구파발", "연신내",
+        "불광", "녹번", "홍제", "무악재", "독립문", "경복궁", "안국", "종로3가", "충무로", "동대입구", "약수", "금호",
+        "옥수", "압구정", "신사", "잠원", "고속터미널", "교대", "남부터미널", "양재", "매봉", "도곡", "대치", "학여울",
+        "대청", "일원", "수서", "가락시장", "경찰병원", "오금"])]},
+    "4호선": {"seoul_name": "4호선", "paths": [("4호선", [
+        "진접", "오남", "별내별가람", "불암산", "당고개", "상계", "노원", "창동", "쌍문", "수유", "미아", "미아사거리",
+        "길음", "성신여대입구", "한성대입구", "혜화", "동대문", "동대문역사문화공원", "충무로", "명동", "회현", "서울역",
+        "숙대입구", "삼각지", "신용산", "이촌", "동작", "총신대입구", "이수", "사당", "남태령", "선바위", "경마공원",
+        "대공원", "과천", "정부과천청사", "인덕원", "평촌", "범계", "금정", "산본", "수리산", "대야미", "반월", "상록수",
+        "한대앞", "중앙", "고잔", "초지", "안산", "신길온천", "정왕", "오이도"])]},
+    "5호선": {"seoul_name": "5호선", "paths": [
+        ("5호선 · 하남검단산 방면", _L5_MAIN + ["길동", "굽은다리", "명일", "고덕", "상일동", "강일", "미사",
+                                          "하남풍산", "하남시청", "하남검단산"]),
+        ("5호선 · 마천 방면", _L5_MAIN + ["둔촌동", "올림픽공원", "방이", "오금", "개롱", "거여", "마천"])]},
+    "7호선": {"seoul_name": "7호선", "paths": [("7호선", [
+        "장암", "도봉산", "수락산", "마들", "노원", "중계", "하계", "공릉", "태릉입구", "먹골", "중화", "상봉", "면목",
+        "사가정", "용마산", "중곡", "군자", "어린이대공원", "건대입구", "뚝섬유원지", "청담", "강남구청", "학동", "논현",
+        "반포", "고속터미널", "내방", "이수", "총신대입구", "남성", "숭실대입구", "상도", "장승배기", "신대방삼거리",
+        "보라매", "신풍", "대림", "남구로", "가산디지털단지", "철산", "광명사거리", "천왕", "온수", "까치울",
+        "부천종합운동장", "춘의", "신중동", "부천시청", "상동", "삼산체육관", "굴포천", "부평구청", "산곡", "석남"])]},
+    "8호선": {"seoul_name": "8호선", "paths": [("8호선", [
+        "별내", "다산", "동구릉", "구리", "장자호수공원", "암사역사공원", "암사", "천호", "강동구청", "몽촌토성", "잠실",
+        "석촌", "송파", "가락시장", "문정", "장지", "복정", "남위례", "산성", "남한산성입구", "단대오거리", "신흥", "수진",
+        "모란"])]},
+    "경의중앙선": {"seoul_name": "경의중앙선", "paths": [
+        ("경의중앙선 · 용산 경유 (본선)", _GJ_NORTH + _GJ_EAST),
+        ("경의중앙선 · 서울역 방면", _GJ_NORTH + ["신촌", "서울역"])]},
+    "서해선": {"seoul_name": "서해선", "paths": [("서해선", [
+        "일산", "풍산", "백마", "곡산", "대곡", "능곡", "김포공항", "원종", "부천종합운동장", "소새울", "소사",
+        "시흥대야", "신천", "신현", "시흥시청", "시흥능곡", "달미", "선부", "초지", "시우", "원시", "서화성",
+        "화성시청"])]},
+})
+
+
 def build_branch_lines(lines):
     """섞여 있는 노선을 갈래별 가상 노선으로 바꾼다. 원래 노선은 목록에서 숨긴다."""
     groups = dict(BRANCH_PATHS)
@@ -615,9 +671,13 @@ def build_branch_lines(lines):
             rl = [L for L in lines if L.get("region") == region]
             # 이 갈래 묶음과 역이 6개 이상 겹치는 노선 = 같은 노선 계열 (예: 코레일 1호선, 서울교통공사 1호선)
             fam = []
+            want = g.get("seoul_name", gname)
             for L in rl:
+                if L.get("virtual") or L.get("no_tt"):
+                    continue
                 ov = sum(1 for s_ in L["stations"] if norm_name(s_["name"]) in all_names)
-                if ov >= 6 and ov >= len(L["stations"]) * 0.6:
+                same = want in seoul_line_names(L)        # 같은 이름의 노선 (예: 4호선 조각들)
+                if ov >= len(L["stations"]) * 0.6 and (ov >= 6 or (same and ov >= min(2, len(L["stations"])))):
                     fam.append((ov, L))
             if not fam:
                 continue
@@ -636,9 +696,26 @@ def build_branch_lines(lines):
                         continue
                     a0 = alts[0]
                     sts.append({"code": f"{a0['opr']}~{a0['ln']}~{a0['stin']}", "name": a0["name"], "alts": alts})
+                # 목록에 없는 역(새로 생기거나 이름이 바뀐 역)은 데이터에서 바로 옆 역 뒤에 끼워 넣는다
+                for _, L in fam:
+                    for k, s_ in enumerate(L["stations"]):
+                        nk = norm_name(s_["name"])
+                        if nk in all_names or any(norm_name(x["name"]) == nk for x in sts):
+                            continue
+                        nbrs = [norm_name(L["stations"][k - 1]["name"])] if k > 0 else []
+                        pos = next((q for q, x in enumerate(sts) if norm_name(x["name"]) in nbrs), None)
+                        if pos is None and k + 1 < len(L["stations"]):
+                            nx = norm_name(L["stations"][k + 1]["name"])
+                            pos = next((q - 1 for q, x in enumerate(sts) if norm_name(x["name"]) == nx), None)
+                        if pos is None:
+                            continue
+                        a = where[nk]
+                        sts.insert(pos + 1, {"code": f"{a[0]['opr']}~{a[0]['ln']}~{a[0]['stin']}",
+                                             "name": a[0]["name"], "alts": a})
                 if len(sts) >= 2:
+                    oprs = list(dict.fromkeys(L["operator"] for _, L in fam))
                     out.append({"key": f"V~{gname}~{j}", "opr": fam[0][1]["opr"], "ln": fam[0][1]["ln"],
-                                "region": region, "operator": "코레일·서울교통공사" if len(fam) > 1 else fam[0][1]["operator"],
+                                "region": region, "operator": "·".join(oprs),
                                 "name": pname, "stations": sts, "virtual": True, "seoul_name": g.get("seoul_name", gname)})
                     made += 1
             if made:
@@ -690,10 +767,26 @@ def kric_station_timetable_raw(opr, ln, stin, day):
     return []
 
 
+TT_CACHE_DAYS = 7      # 역 시간표는 평일/토/휴일 종류별이라 일주일 동안 다시 받지 않는다
+
+
+def _slim(rows):
+    """메모리를 아끼려고 쓰는 칸만 남긴다 (열차번호·시각·급행 표시)."""
+    out = []
+    for r in rows or []:
+        k = {"trnNo": r.get("trnNo"), "arvTm": r.get("arvTm"), "dptTm": r.get("dptTm")}
+        for f, v in r.items():
+            if "exp" in f.lower() or re.search(r"급행|특급", str(v)):
+                k[f] = v
+        out.append(k)
+    return out
+
+
 def _tt(opr, ln, stin, day):
     safe = re.sub(r"[^0-9A-Za-z_-]", "_", f"{opr}_{ln}_{stin}_{day}")
     return cached(("kric", opr, ln, stin, day), 6 * 3600,
-                  lambda: disk_cache(f"tt_{safe}.json", 1, lambda: kric_station_timetable_raw(opr, ln, stin, day)) or [])
+                  lambda: _slim(disk_cache(f"tt_{safe}.json", TT_CACHE_DAYS,
+                                           lambda: _slim(kric_station_timetable_raw(opr, ln, stin, day)))))
 
 
 def kric_station_timetable(opr, ln, stin, day):
@@ -1119,6 +1212,54 @@ def trn_keys(no):
     return keys
 
 
+_warming, _warm_lock = {}, threading.Lock()
+
+
+def plan_nowait(L, day, wait=2.5):
+    """노선 시간표를 최대 wait초만 기다린다. 다 못 받으면 None (뒤에서 계속 받음)."""
+    key = ("plan_line", L["key"], day)
+    with _mem_lock:
+        hit = _mem_cache.get(key)
+    if hit and time.time() - hit[0] < 6 * 3600:
+        return hit[1]
+    with _warm_lock:
+        th = _warming.get(key)
+        if not th or not th.is_alive():
+            th = threading.Thread(target=lambda: planned_line_times(L, day), daemon=True)
+            _warming[key] = th
+            th.start()
+    th.join(wait)
+    if th.is_alive():
+        return None
+    with _mem_lock:
+        hit = _mem_cache.get(key)
+    return hit[1] if hit else {}
+
+
+def warm_all_loop():
+    """서버가 켜질 때와 매일 새벽 3시 10분에 모든 도시철도 노선 시간표를 미리 받아 둔다."""
+    time.sleep(5)
+    while True:
+        try:
+            if CFG.get("kric_key") and not is_demo():
+                day = day_code((dt.datetime.now(KST) - dt.timedelta(hours=3)).strftime("%Y%m%d"))
+                t0 = time.time()
+                lines = [L for L in all_urban_lines() if not L.get("no_tt")]
+                for L in lines:
+                    try:
+                        planned_line_times(L, day)
+                    except Exception as e:
+                        print("[미리 받기] 실패:", L.get("name"), e)
+                print(f"[미리 받기] 노선 {len(lines)}개 시간표 준비 완료 ({time.time() - t0:.0f}초)")
+        except Exception as e:
+            print("[미리 받기] 오류:", e)
+        now = dt.datetime.now(KST)
+        nxt = now.replace(hour=3, minute=10, second=0, microsecond=0)
+        if nxt <= now:
+            nxt += dt.timedelta(days=1)
+        time.sleep((nxt - now).total_seconds())
+
+
 def planned_line_times(L, day):
     """노선 전체 역 시간표 → {열차번호키: {원래 열차번호: {"st": {역이름키: (도착초, 출발초)}, "kind": 급행종류}}}"""
     def build():
@@ -1327,8 +1468,11 @@ def linemap(line_key):
     if is_demo():
         return demo_linemap(L, ymd)
     sday = (dt.datetime.now(KST) - dt.timedelta(hours=3)).strftime("%Y%m%d")
+    loading = False
     try:
-        plan = {} if L.get("no_tt") else planned_line_times(L, day_code(sday))
+        plan = {} if L.get("no_tt") else plan_nowait(L, day_code(sday))
+        if plan is None:
+            plan, loading = {}, True
     except Exception:
         plan = {}
     idx = {norm_name(n): i for i, n in enumerate(names)}
@@ -1351,11 +1495,13 @@ def linemap(line_key):
             n_run = sum(1 for t in trains if not t.get("parked"))
             note = (f"시간표 기준 위치예요 (실시간 아님) · 운행 중 {n_run}대" if trains else
                     "시간표상 지금 다니는 열차가 없어요.")
+        elif loading:
+            note = "이 노선 시간표를 처음 불러오는 중이에요. 잠시 후 자동으로 열차가 떠요."
         elif L.get("no_tt"):
             note = "지금은 실시간 위치를 받지 못했어요. 이 노선은 공개 시간표가 없어 시간표 기준 위치도 못 그려요."
         else:
             note = "실시간 위치도, 시간표도 받지 못했어요."
-        return {"stations": names, "trains": trains, "realtime": False, "note": note,
+        return {"stations": names, "trains": trains, "realtime": False, "note": note, "loading": loading,
                 "sides": ["상행·내선", "하행·외선"],
                 "tracking_note": "지연은 반영되지 않아요. 시간표대로 달린다고 가정한 위치예요." if trains else ""}
     live, by_no = [], {}
@@ -1388,7 +1534,9 @@ def linemap(line_key):
     n_run = sum(1 for t in trains if not t.get("parked"))
     n_park = len(trains) - n_run
     note = f"운행 중 {n_run}대 · 운행 종료 {n_park}대" if trains else ""
-    return {"stations": names, "trains": trains, "realtime": True, "line": line, "note": note,
+    if loading:
+        note += " · 시간표 불러오는 중 (지연·급행 표시는 잠시 후)"
+    return {"stations": names, "trains": trains, "realtime": True, "line": line, "note": note, "loading": loading,
             "sides": ["상행·내선", "하행·외선"],
             "tracking_note": "운행 종료 열차는 이 서버가 켜진 뒤부터 본 열차만 표시됩니다."}
 
@@ -1889,6 +2037,7 @@ def main():
     port = int(os.environ.get("PORT") or CFG.get("port") or 8000)
     host = os.environ.get("HOST") or CFG.get("host") or "0.0.0.0"
     srv = ThreadingHTTPServer((host, port), Handler)
+    threading.Thread(target=warm_all_loop, daemon=True).start()   # 시간표 미리 받기
     print(f"열차 안내판 실행 중 → http://localhost:{port}")
     print("데모 모드 (인증키 없음)" if is_demo() else
           f"키: TAGO={'O' if CFG['data_go_kr_key'] else 'X'}  KRIC={'O' if CFG['kric_key'] else 'X'}  "

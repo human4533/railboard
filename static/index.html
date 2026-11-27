@@ -350,7 +350,14 @@ $$("[data-view]").forEach(b => b.onclick = () => setView(b.dataset.view));
 
 /* ── 시간표 ── */
 function fill(sel, items, keep){ const p = sel.value; sel.innerHTML = items.map(([v,t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join(""); if (keep && items.some(([v]) => v === p)) sel.value = p; }
-async function ensureUrban(){ if (!URBAN.length){ const d = await getJSON("/api/urban/lines"); URBAN = d.lines || []; } return URBAN; }
+async function ensureUrban(){            // 노선 목록은 폰에 저장해 두고 바로 쓰고, 뒤에서 새로 받아 둔다
+  if (URBAN.length) return URBAN;
+  let saved = null; try { saved = JSON.parse(localStorage.getItem("rb_urban") || "null"); } catch(e){}
+  const fresh = getJSON("/api/urban/lines").then(d => { if (d.lines?.length){ try { localStorage.setItem("rb_urban", JSON.stringify(d.lines)); } catch(e){} } return d.lines || []; });
+  if (saved?.length){ URBAN = saved; fresh.then(l => { if (l.length) URBAN = l; }).catch(() => {}); }
+  else URBAN = await fresh;
+  return URBAN;
+}
 function regions(){ return [...new Set(URBAN.map(l => l.region))]; }
 function refreshLines(){
   if (mode === "intercity"){ $("#regionWrap").classList.add("hidden"); fill($("#line"), META.intercity.map(l => [l.id, l.name]), true); }
@@ -395,12 +402,13 @@ async function loadBoard(){
   const stName = $("#station").selectedOptions[0]?.textContent || "", lineName = $("#line").selectedOptions[0]?.textContent || "";
   const p = new URLSearchParams({line, station, ...w});
   $("#boardMsg").innerHTML = `<div class="small">불러오는 중…</div>`;
+  const capital = m === "urban" && ($("#region").value || "").startsWith("수도권");
+  // 시간표와 실시간 도착을 동시에 요청 (차례로 기다리지 않음)
+  const rtP = capital ? getJSON(`/api/realtime/seoul?station=${encodeURIComponent(stName)}`).catch(() => ({error:"실시간 정보를 불러오지 못했습니다."})) : Promise.resolve(null);
   let data;
   try { data = await getJSON(`/api/board/${m}?${p}`); } catch(e){ if (seq !== loadSeq) return; $("#boardMsg").innerHTML = `<div class="err">서버에 연결할 수 없습니다.</div>`; return; }
   if (seq !== loadSeq) return;
-  const capital = m === "urban" && ($("#region").value || "").startsWith("수도권");
-  let rt = null;
-  if (capital){ try { rt = await getJSON(`/api/realtime/seoul?station=${encodeURIComponent(stName)}`); } catch(e){ rt = {error:"실시간 정보를 불러오지 못했습니다."}; } }
+  const rt = await rtP;
   if (seq !== loadSeq) return;
   const liveByNo = {}; (rt?.rows || []).forEach(r => { if (r.train_no) liveByNo[r.train_no.replace(/^0+/,"")] = r.msg; });
   $("#boardTitle").textContent = `${lineName} ${stName}`;
@@ -467,6 +475,7 @@ async function loadMap(){
   if (d.error){ $("#mapBox").innerHTML = `<div class="err" style="margin:0 12px">${esc(d.error)}</div>`; return; }
   const [sa, sb] = d.sides || ["상행", "하행"];
   $("#sideA").textContent = sa; $("#sideB").textContent = sb;
+  if (d.loading) setTimeout(() => { if (view === "map" && seq === mapSeq) loadMap(); }, 3000);   // 시간표 다 받으면 바로 다시
   $("#mapNote").textContent = d.note || (d.realtime ? `${d.trains.filter(t => !t.parked).length}대 운행 중` : "");
   $("#mapTrack").textContent = d.tracking_note || "";
   const by = {}; d.trains.slice().sort((a, b) => (a.parked?1:0) - (b.parked?1:0)).forEach(t => (by[t.i+t.side] ||= []).push(t));
